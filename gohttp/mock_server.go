@@ -1,6 +1,10 @@
 package gohttp
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -18,11 +22,38 @@ type mockServer struct {
 }
 
 func (m *mockServer) getMockKey(method, url, body string) string {
-	return method + url + body
+	hasher := md5.New()
+	hasher.Write([]byte(method + url + m.cleanBody(body)))
+	key := hex.EncodeToString(hasher.Sum(nil))
+	return key
+}
+
+func (m *mockServer) cleanBody(body string) string {
+	body = strings.TrimSpace(body)
+
+	if body == "" {
+		return ""
+	}
+
+	body = strings.ReplaceAll(body, "\t", "")
+	body = strings.ReplaceAll(body, "\n", "")
+	body = strings.ReplaceAll(body, "\r", "")
+
+	return body
 }
 
 func (m *mockServer) getMock(method, url, body string) *Mock {
-	return m.mocks[m.getMockKey(method, url, body)]
+	if !m.enabled {
+		return nil
+	}
+
+	if mock := m.mocks[m.getMockKey(method, url, body)]; mock != nil {
+		return mock
+	}
+
+	return &Mock{
+		Error: fmt.Errorf("no mock matching %s from '%s' with given body", method, url),
+	}
 }
 
 func StartMockServer() {
@@ -45,4 +76,8 @@ func AddMock(mock Mock) {
 
 	key := mockupServer.getMockKey(mock.Method, mock.Url, mock.RequestBody)
 	mockupServer.mocks[key] = &mock
+}
+
+func FlushMocks() {
+	mockupServer.mocks = make(map[string]*Mock)
 }

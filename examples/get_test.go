@@ -3,18 +3,24 @@ package examples
 import (
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/menxqk/go-httpclient/gohttp"
 )
 
-func TestGetEndpoints(t *testing.T) {
+func TestMain(m *testing.M) {
 	// Tell the HTTP library to mock any further requests from here.
 	gohttp.StartMockServer()
 
+	os.Exit(m.Run())
+}
+
+func TestGetEndpoints(t *testing.T) {
 	t.Run("TestErrorFetchingFromGithub", func(t *testing.T) {
 		// Initalization
+		gohttp.FlushMocks()
 		gohttp.AddMock(gohttp.Mock{
 			Method: http.MethodGet,
 			Url:    "https://api.github.com",
@@ -40,6 +46,7 @@ func TestGetEndpoints(t *testing.T) {
 
 	t.Run("TestErrorUnmarshalResponseBody", func(t *testing.T) {
 		// Initalization
+		gohttp.FlushMocks()
 		gohttp.AddMock(gohttp.Mock{
 			Method:             http.MethodGet,
 			Url:                "https://api.github.com",
@@ -66,6 +73,7 @@ func TestGetEndpoints(t *testing.T) {
 
 	t.Run("TestNoError", func(t *testing.T) {
 		// Initalization
+		gohttp.FlushMocks()
 		gohttp.AddMock(gohttp.Mock{
 			Method:             http.MethodGet,
 			Url:                "https://api.github.com",
