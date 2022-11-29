@@ -8,17 +8,22 @@ import (
 
 func TestGetRequestHeaders(t *testing.T) {
 	// Initialization
-	client := httpClient{}
 	commonHeaders := make(http.Header)
 	commonHeaders.Set("Content-Type", "application/json")
 	commonHeaders.Set("User-Agent", "cool-http-client")
-	client.Headers = commonHeaders
 
-	// Execution
+	client := NewBuilder().SetHeaders(commonHeaders).Build()
+
+	c, ok := client.(*httpClient)
+	if !ok {
+		t.Fatalf("wrong concrete type for http client: %T", client)
+	}
+
 	requestHeader := make(http.Header)
 	requestHeader.Set("X-Request-Id", "ABC-123")
 
-	finalHeaders := client.getRequestHeaders(requestHeader)
+	// Execution
+	finalHeaders := c.getRequestHeaders(requestHeader)
 
 	// Validation
 	if len(finalHeaders) != 3 {
@@ -37,11 +42,16 @@ func TestGetRequestHeaders(t *testing.T) {
 
 func TestGetRequestBody(t *testing.T) {
 	// Initialization
-	client := httpClient{}
+	client := NewBuilder().Build()
+
+	c, ok := client.(*httpClient)
+	if !ok {
+		t.Fatalf("wrong concrete type for http client: %T", client)
+	}
 
 	t.Run("NoBodyNilResponse", func(t *testing.T) {
 		// Execution
-		body, err := client.getRequestBody("", nil)
+		body, err := c.getRequestBody("", nil)
 
 		// Validation
 		if err != nil {
@@ -55,7 +65,7 @@ func TestGetRequestBody(t *testing.T) {
 	t.Run("BodyWithJson", func(t *testing.T) {
 		// Execution
 		requestBody := []string{"one", "two"} // ["one","two"]
-		body, err := client.getRequestBody("application/json", requestBody)
+		body, err := c.getRequestBody("application/json", requestBody)
 
 		// Validation
 		if err != nil {
@@ -76,7 +86,7 @@ func TestGetRequestBody(t *testing.T) {
 			First:  "three",
 			Second: "four",
 		}
-		body, err := client.getRequestBody("application/xml", requestBody)
+		body, err := c.getRequestBody("application/xml", requestBody)
 
 		// Validation
 		if err != nil {
@@ -90,7 +100,7 @@ func TestGetRequestBody(t *testing.T) {
 	t.Run("BodyWithJsonAsDefault", func(t *testing.T) {
 		// Execution
 		requestBody := []string{"five", "six"} // ["one","two"]
-		body, err := client.getRequestBody("", requestBody)
+		body, err := c.getRequestBody("", requestBody)
 
 		// validation
 		if err != nil {

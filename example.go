@@ -23,6 +23,11 @@ func main() {
 	getUrls()
 }
 
+type User struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+}
+
 func getUrls() {
 	response, err := githubHttpClient.Get("https://api.github.com", nil)
 	if err != nil {
